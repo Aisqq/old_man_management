@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>老人监护系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.5;
+            overflow-x: hidden;
+        }
+
+        /* 自定义导航栏 */
+        .custom-nav {
+            height: 44px;
+            background-color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 101;
+        }
+
+        .nav-title {
+            font-size: 24px;
+            color: orange;
+            font-weight: bold;
+        }
+
+        /* 顶部日期栏 */
+        .top-bar {
+            position: sticky;
+            top: 44px;
+            z-index: 100;
+            height: 50px;
+            padding: 0 15px;
+            background-color: skyblue;
+            display: flex;
+            align-items: center;
+            color: white;
+        }
+
+        .date-text {
+            font-size: 18px;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .date-hint {
+            color: #2ff;
+            font-size: 12px;
+            opacity: 0.8;
+            flex: 1;
+        }
+
+        .arrow-icon {
+            font-size: 16px;
+            margin-left: 10px;
+        }
+
+        /* 卡片列表 */
+        .card-list {
+            padding: 0 10px;
+            padding-top: 50px;
+            padding-bottom: 0; /* 修改为0，使最后一个卡片贴近底部 */
+            height: calc(100vh - 94px);
+            box-sizing: border-box;
+            overflow-y: auto;
+            /* 细滚动条样式 */
+            scrollbar-width: thin;
+            scrollbar-color: #ccc #f5f5f5;
+        }
+
+        /* 为Webkit浏览器定制细滚动条 */
+        .card-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        .card-list::-webkit-scrollbar-track {
+            background: #f5f5f5;
+        }
+        .card-list::-webkit-scrollbar-thumb {
+            background-color: #ccc;
+            border-radius: 2px;
+        }
+
+        .card-list > .info-card:first-child {
+            margin-top: 0;
+            border-top-left-radius: 0;
+            border-top-right-radius: 0;
+        }
+
+        /* 卡片样式 */
+        .info-card {
+            padding: 15px;
+            margin: 12px 0 0;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        /* 最后一个卡片特殊处理 */
+        .card-list > .info-card:last-child {
+            margin-bottom: 0; /* 移除最后一个卡片的下边距 */
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .info-item {
+            margin: 8px 0;
+        }
+
+        .info-text {
+            font-size: 14px;
+            color: #666;
+        }
+
+        /* 新增的特殊卡片样式 */
+        .special-card {
+            background-color: #f9f9f9;
+            border-left: 4px solid #3a7bd5;
+        }
+
+        /* 底部导航栏 */
+        .tab-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px; /* 增加高度以适应大字体 */
+            background-color: #fff;
+            display: flex;
+            border-top: 1px solid #eee;
+            z-index: 100;
+        }
+
+        .tab-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .tab-text {
+            font-size: 26px; /* 增大字体到26px */
+            font-weight: 500;
+            color: #3a7bd5;
+        }
+
+        .tab-text.active {
+            color: #3a7bd5;
+            font-weight: bold;
+        }
+
+        /* 日期选择器 */
+        .date-picker-mask {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .date-picker-container {
+            width: 80%;
+            max-width: 300px;
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .date-picker-header {
+            padding: 10px;
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #eee;
+        }
+
+        .date-picker-body {
+            display: flex;
+            height: 200px;
+        }
+
+        .date-picker-column {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .date-picker-item {
+            padding: 10px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+
+        .date-picker-item.selected {
+            background-color: #3a7bd5;
+            color: white;
+        }
+
+        .date-picker-footer {
+            padding: 10px;
+            display: flex;
+            justify-content: flex-end;
+            border-top: 1px solid #eee;
+        }
+
+        .date-picker-button {
+            padding: 5px 15px;
+            margin-left: 10px;
+            border: none;
+            border-radius: 4px;
+            background-color: #3a7bd5;
+            color: white;
+            cursor: pointer;
+        }
+
+        .date-picker-button.cancel {
+            background-color: #f5f5f5;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <!-- 自定义导航栏 -->
+    <div class="custom-nav">
+        <div class="nav-title">老人监护系统</div>
+    </div>
+
+    <!-- 顶部日期栏 -->
+    <div class="top-bar" id="dateBar">
+        <div class="date-text" id="currentDate"></div>
+        <div class="date-hint">(点击切换日期可查询历史信息)</div>
+        <div class="arrow-icon">▼</div>
+    </div>
+
+    <!-- 信息卡片列表 -->
+    <div class="card-list">
+        <div class="info-card" style="background-color: #FFE8E8;">
+            <div class="card-title">健康状态监测</div>
+            <div class="info-item">
+                <div class="info-text">心率：72bpm (正常范围)</div>
+            </div>
+            <div class="info-item">
+                <div class="info-text">血压：118/76 mmHg</div>
+            </div>
+            <div class="info-item">
+                <div class="info-text">血糖：95%</div>
+            </div>
+        </div>
+
+        <div class="info-card" style="background-color: #E8F5FF;">
+            <div class="card-title">活动轨迹记录</div>
+            <div class="info-item">
+                <div class="info-text">今日步数：1,258步</div>
+            </div>
+            <div class="info-item">
+                <div class="info-text">活动次数：新7/9/第7/23周</div>
+            </div>
+            <div class="info-item">
+                <div class="info-text">入站时间：已结束12天</div>
+            </div>
+        </div>
+
+        <div class="info-card" style="background-color: #FFF5E8;">
+            <div class="card-title">用药管理</div>
+            <div class="info-item">
+                <div class="info-text">每日一次服用：今天 08:30 (周五到)</div>
+            </div>
+            <div class="info-item">
+                <div class="info-text">下次服用剂量：今天 20:30</div>
+            </div>
+            <div class="info-item">
+                <div class="info-text">药品名称：艾瑞康</div>
+            </div>
+        </div>
+
+        <div class="info-card" style="background-color: #F0FFE8;">
+            <div class="card-title">家庭安全状态</div>
+            <div class="info-item">
+                <div class="info-text">性别(女): 已上岗 (最后开门14:30)</div>
+            </div>
+            <div class="info-item">
+                <div class="info-text">医生姓名：王军</div>
+            </div>
+            <div class="info-item">
+                <div class="info-text">关系信息：无异常</div>
+            </div>
+        </div>
+
+        <div class="info-card" style="background-color: #F5E8FF;">
+            <div class="card-title">环境数据</div>
+            <div class="info-item">
+                <div class="info-text">室内温度：20℃ (空调运行中)</div>
+            </div>
+            <div class="info-item">
+                <div class="info-text">湿度：45%</div>
+            </div>
+            <div class="info-item">
+                <div class="info-text">空气流量：PM2.5.1 day/m³ (夜高)</div>
+            </div>
+        </div>
+
+       <!-- 后面两个卡片部分 -->
+<div class="info-card" style="background-color: #FFF0F5;">  <!-- 粉色卡片 -->
+    <div class="card-title">设备状态</div>
+    <div class="info-item">
+        <div class="info-text">智能制造：在线（辅助设备监测中）</div>
+    </div>
+    <div class="info-item">
+        <div class="info-text">紧急按钮：待机状态</div>
+    </div>
+    <div class="info-item">
+        <div class="info-text">网络连接：稳定</div>
+    </div>
+</div>
+
+<div class="info-card" style="background-color: #E8FFFC;">  <!-- 浅蓝绿色卡片 -->
+    <div class="card-title">今日解锁记录</div>
+    <div class="info-item">
+        <div class="info-text">10:15 卫生防疫通知（已处理）</div>
+    </div>
+    <div class="info-item">
+        <div class="info-text">13:00 心肺复苏行动（自动标记）</div>
+    </div>
+    <div class="info-item">
+        <div class="info-text">无紧急报警</div>
+    </div>
+</div>
+    </div>
+
+    <!-- 底部导航栏 -->
+    <div class="tab-bar">
+        <div class="tab-item">
+            <div class="tab-text">信息</div>
+        </div>
+        <div class="tab-item active">
+            <div class="tab-text active">个人</div>
+        </div>
+    </div>
+
+    <!-- 日期选择器 (初始隐藏) -->
+    <div id="datePicker" class="date-picker-mask" style="display: none;">
+        <div class="date-picker-container">
+            <div class="date-picker-header">
+                <div>选择日期</div>
+            </div>
+            <div class="date-picker-body">
+                <div class="date-picker-column" id="yearColumn"></div>
+                <div class="date-picker-column" id="monthColumn"></div>
+                <div class="date-picker-column" id="dayColumn"></div>
+            </div>
+            <div class="date-picker-footer">
+                <button class="date-picker-button cancel" id="cancelButton">取消</button>
+                <button class="date-picker-button" id="confirmButton">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 初始化当前日期
+        const currentDate = new Date();
+        const year = currentDate.getFullYear();
+        const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+        const day = String(currentDate.getDate()).padStart(2, '0');
+        document.getElementById('currentDate').textContent = `${year}/${month}/${day}`;
+        
+        // 日期选择器数据
+        const years = [];
+        for (let i = year; i >= year - 5; i--) {
+            years.push(i);
+        }
+        
+        const months = Array.from({length: 12}, (_, i) => i + 1);
+        
+        function getDays(y, m) {
+            return new Date(y, m, 0).getDate();
+        }
+        
+        // 初始化日期选择器
+        function initDatePicker() {
+            const yearColumn = document.getElementById('yearColumn');
+            const monthColumn = document.getElementById('monthColumn');
+            const dayColumn = document.getElementById('dayColumn');
+            
+            // 填充年份
+            years.forEach(y => {
+                const div = document.createElement('div');
+                div.className = 'date-picker-item';
+                div.textContent = y + '年';
+                div.dataset.year = y;
+                if (y === year) {
+                    div.classList.add('selected');
+                }
+                div.addEventListener('click', selectYear);
+                yearColumn.appendChild(div);
+            });
+            
+            // 填充月份
+            months.forEach(m => {
+                const div = document.createElement('div');
+                div.className = 'date-picker-item';
+                div.textContent = m + '月';
+                div.dataset.month = m;
+                if (m === parseInt(month)) {
+                    div.classList.add('selected');
+                }
+                div.addEventListener('click', selectMonth);
+                monthColumn.appendChild(div);
+            });
+            
+            // 填充日期
+            const daysInMonth = getDays(year, parseInt(month));
+            for (let d = 1; d <= daysInMonth; d++) {
+                const div = document.createElement('div');
+                div.className = 'date-picker-item';
+                div.textContent = d + '日';
+                div.dataset.day = d;
+                if (d === parseInt(day)) {
+                    div.classList.add('selected');
+                }
+                div.addEventListener('click', selectDay);
+                dayColumn.appendChild(div);
+            }
+        }
+        
+        // 选择年份
+        function selectYear(e) {
+            const items = document.querySelectorAll('#yearColumn .date-picker-item');
+            items.forEach(item => item.classList.remove('selected'));
+            e.target.classList.add('selected');
+            updateDays();
+        }
+        
+        // 选择月份
+        function selectMonth(e) {
+            const items = document.querySelectorAll('#monthColumn .date-picker-item');
+            items.forEach(item => item.classList.remove('selected'));
+            e.target.classList.add('selected');
+            updateDays();
+        }
+        
+        // 选择日期
+        function selectDay(e) {
+            const items = document.querySelectorAll('#dayColumn .date-picker-item');
+            items.forEach(item => item.classList.remove('selected'));
+            e.target.classList.add('selected');
+        }
+        
+        // 更新日期列
+        function updateDays() {
+            const selectedYear = document.querySelector('#yearColumn .selected')?.dataset.year || year;
+            const selectedMonth = document.querySelector('#monthColumn .selected')?.dataset.month || month;
+            
+            const dayColumn = document.getElementById('dayColumn');
+            dayColumn.innerHTML = '';
+            
+            const daysInMonth = getDays(parseInt(selectedYear), parseInt(selectedMonth));
+            for (let d = 1; d <= daysInMonth; d++) {
+                const div = document.createElement('div');
+                div.className = 'date-picker-item';
+                div.textContent = d + '日';
+                div.dataset.day = d;
+                if (d === parseInt(day)) {
+                    div.classList.add('selected');
+                }
+                div.addEventListener('click', selectDay);
+                dayColumn.appendChild(div);
+            }
+        }
+        
+        // 显示/隐藏日期选择器
+        document.getElementById('dateBar').addEventListener('click', () => {
+            document.getElementById('datePicker').style.display = 'flex';
+        });
+        
+        document.getElementById('cancelButton').addEventListener('click', () => {
+            document.getElementById('datePicker').style.display = 'none';
+        });
+        
+        document.getElementById('confirmButton').addEventListener('click', () => {
+            const selectedYear = document.querySelector('#yearColumn .selected')?.dataset.year || year;
+            const selectedMonth = document.querySelector('#monthColumn .selected')?.dataset.month || month;
+            const selectedDay = document.querySelector('#dayColumn .selected')?.dataset.day || day;
+            
+            document.getElementById('currentDate').textContent = 
+                `${selectedYear}/${String(selectedMonth).padStart(2, '0')}/${String(selectedDay).padStart(2, '0')}`;
+            
+            document.getElementById('datePicker').style.display = 'none';
+        });
+        
+        // 初始化
+        initDatePicker();
+    </script>
+</body>
+</html>

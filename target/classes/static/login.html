@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>老人监护系统 - 登录</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .login-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            width: 400px;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-header h1 {
+            color: #3a7bd5;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .login-header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            border-color: #3a7bd5;
+            outline: none;
+        }
+
+        .captcha-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        .captcha-input {
+            flex: 1;
+        }
+
+        .captcha-img {
+            width: 100px;
+            height: 40px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-family: 'Arial', sans-serif;
+            font-size: 18px;
+            letter-spacing: 2px;
+            color: #333;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #3a7bd5;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 10px;
+        }
+
+        .login-btn:hover {
+            background-color: #2c5fb3;
+        }
+
+        .login-footer {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        .footer-link {
+            color: #666;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-link:hover {
+            color: #3a7bd5;
+            text-decoration: underline;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 5px;
+            text-align: center;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<div class="login-container">
+    <div class="login-header">
+        <h1>老人监护系统</h1>
+        <p>请登录您的账户</p>
+    </div>
+
+    <form id="loginForm">
+        <div class="form-group">
+            <label for="username">用户名</label>
+            <input type="text" id="username" name="username" placeholder="请输入用户名" required>
+        </div>
+
+        <div class="form-group">
+            <label for="password">密码</label>
+            <input type="password" id="password" name="password" placeholder="请输入密码" required>
+        </div>
+        <div class="form-group">
+            <label for="captchaInput">验证码</label>
+            <div class="captcha-container">
+                <input type="text" id="captchaInput" name="captcha" placeholder="输入验证码" required>
+                <img id="captchaImage" src="/captcha/pic" title="点击刷新验证码">
+            </div>
+        </div>
+        <div id="errorMessage" class="error-message"></div>
+        <button type="submit" class="login-btn">登录</button>
+    </form>
+    <div class="login-footer">
+        <a href="forgetPassword.html" class="footer-link">忘记密码?</a>
+        <a href="register.html" class="footer-link">注册账号</a>
+    </div>
+</div>
+
+<script>
+    // 页面加载时绑定事件
+    document.addEventListener('DOMContentLoaded', function() {
+        const loginForm = document.getElementById('loginForm');
+        const captchaImage = document.getElementById('captchaImage');
+
+        // 刷新验证码
+        function refreshCaptcha() {
+            captchaImage.src = '/captcha/pic?t=' + Date.now();
+        }
+
+        // 点击验证码图片刷新
+        captchaImage.addEventListener('click', refreshCaptcha);
+
+        // 表单提交
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const captcha = document.getElementById('captchaInput').value;
+            const errorElement = document.getElementById('errorMessage');
+
+            // 清除错误信息
+            errorElement.style.display = 'none';
+            errorElement.textContent = '';
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username,
+                        password,
+                        captcha
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // 1. 存储Token
+                    localStorage.setItem('jwtToken', data.token);
+                    // 2. 跳转到首页
+                    window.location.href = '/health.html';
+                } else {
+                    // 显示错误信息
+                    errorElement.textContent = data.message || '登录失败，请检查输入';
+                    errorElement.style.display = 'block';
+
+                    // 失败时刷新验证码
+                    refreshCaptcha();
+                    document.getElementById('captchaInput').value = '';
+                }
+            } catch (err) {
+                console.error('登录错误:', err);
+                errorElement.textContent = '网络错误，请稍后重试';
+                errorElement.style.display = 'block';
+            }
+        });
+    });
+</script>
+</body>
+</html>
